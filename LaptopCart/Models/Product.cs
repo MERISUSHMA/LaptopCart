@@ -10,7 +10,7 @@ namespace LaptopCart.Models
         [Required(ErrorMessage = "Product Name is Required")]
         public string? Name {  get; set; }
         [Required(ErrorMessage = "Product Description is required")]
-        public string? Description  { get; set; }
+        public string? Description { get; set; }
         
         public decimal? Price { get; set; }
 

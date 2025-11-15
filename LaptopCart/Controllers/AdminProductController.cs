@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection.Metadata.Ecma335;
 
 namespace LaptopCart.Controllers
 {
@@ -18,7 +20,8 @@ namespace LaptopCart.Controllers
         }
         public IActionResult Index()
         {
-            return View();
+            List<Product> products = _context.Products.ToList();
+            return View(products);
         }
         public IActionResult Create()
         {
@@ -27,7 +30,7 @@ namespace LaptopCart.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(Product product)
         {
-            if (product.ImageFile != null && product.ImageFile.Length > 0)
+
             {
                 //Get the wwwroot path from the environment
                 string wwwRootPath = _webHostEnvironment.WebRootPath;
@@ -58,16 +61,18 @@ namespace LaptopCart.Controllers
 
                 //[Optional] verify file was saved -useful for debugging
                 string confirmPath = Path.Combine(wwwRootPath, product.ImagePath.TrimStart('/'));
-                if(!System.IO.File.Exists(confirmPath))
+                if (!System.IO.File.Exists(confirmPath))
                 {
                     throw new FileNotFoundException("Image was not saved correctly", confirmPath);
                 }
 
-                
+
             }
             if (ModelState.IsValid)
             {
                 _context.Products.Add(product);
+
+
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
@@ -76,6 +81,75 @@ namespace LaptopCart.Controllers
                 return View(product);
             }
         }
+        public async Task<IActionResult> Edit(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            return View(product);
+        }
+        [HttpPost]
+        public async Task<IActionResult> Edit(Product product)
+        {
+            //If a new image is uploaded, save it
+            if(product.ImageFile != null && product.ImageFile.Length > 0)
+            { 
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(product.ImageFile.FileName);
+            var savePath = Path.Combine(_webHostEnvironment.WebRootPath, "images", fileName);
+
+            //Ensure /images folder exists
+            var imagesDir = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+            if (!Directory.Exists(imagesDir))
+            {
+                Directory.CreateDirectory(imagesDir);
+            }
+
+            //Save the new file
+            using (var stream = new FileStream(savePath, FileMode.Create))
+            {
+                await product.ImageFile.CopyToAsync(stream);
+            }
+
+            //Save relative path in database
+            product.ImagePath = "/images/" + fileName;
+        }
+           //Update Product in DB
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+        public async Task<IActionResult> Delete(int id)
+        {
+            if(id==null)
+            {
+                return NotFound();
+            }
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+            return View(product);
+        
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product != null)
+            {
+                //Optional: Delete image file if needed
+                if (!string.IsNullOrEmpty(product.ImagePath))
+                {
+                    var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, product.ImagePath.TrimStart('/').Replace("/", "\\"));
+                    if (System.IO.File.Exists(imagePath))
+                        System.IO.File.Delete(imagePath);
+                }
+                _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+            
     }
 }
 
