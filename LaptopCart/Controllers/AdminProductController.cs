@@ -74,6 +74,7 @@ namespace LaptopCart.Controllers
 
 
                 await _context.SaveChangesAsync();
+                TempData["success"] = "Record Inserted Successfully";
                 return RedirectToAction("Index");
             }
             else
@@ -114,6 +115,7 @@ namespace LaptopCart.Controllers
            //Update Product in DB
             _context.Products.Update(product);
             await _context.SaveChangesAsync();
+            TempData["success"] = "Record edited successfully";
             return RedirectToAction(nameof(Index));
         }
         public async Task<IActionResult> Delete(int id)
@@ -145,6 +147,7 @@ namespace LaptopCart.Controllers
                         System.IO.File.Delete(imagePath);
                 }
                 _context.Products.Remove(product);
+                TempData["success"] = "Recoed Deleted successfully";
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));

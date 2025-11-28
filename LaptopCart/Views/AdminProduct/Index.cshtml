@@ -1,5 +1,13 @@
 ﻿@model IEnumerable<Product>
 
+<partial name="_NotificationMessage" />
+
+
+
+@*@if(TempData["success"]!=null)
+{
+    <h2>@TempData["success"]</h2>
+}*@
 
     <div class="row align-items-center mb-3">
         <div class="col-md-2">
